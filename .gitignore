@@ -1,3 +1,5 @@
-/Data
-/Data/**/
-/Data/**/**/
+/data
+/data/*/
+/data/*/*/
+/data/*/*/*/
+/data/*/*/*/*/
