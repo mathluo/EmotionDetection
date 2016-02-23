@@ -22,26 +22,27 @@ import theano
 import theano.tensor as T
 import lasagne
 import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
-import scipy
 from scipy.misc import imresize
-
+import pandas as pd
+import pickle
 # ################## Download and prepare the MNIST dataset ##################
 # This is just some way of getting the MNIST dataset from an online location
 # and loading it into numpy arrays. It doesn't involve Lasagne at all.
 
+
 def load_dataset():
     # We first define a download function, supporting both Python 2 and 3.
     source = '../data/OneDrive-2016-02-20/'
-    emotions = ['Happy', 'Sad', 'Neutral',
-                'Disgust', 'Fear', 'Angry', 'Surprise']
+    # 0=Angry, 1=Disgust, 2=Fear, 3=Happy, 4=Sad, 5=Surprise, 6=Neutral
+
+    emotions = ['Angry', 'Disgust', 'Fear',
+                'Happy', 'Sad', 'Surprise', 'Neutral']
 
     def load_face_images(folder_name):
         category = 0
         y_train = []
         list_of_images = []
         for emotion in emotions:
-            category = category + 1
             data_folder = source + folder_name + '/' + \
                 folder_name + '_Aligned_Faces/' + emotion + '/'
             for file in os.listdir(data_folder):
@@ -52,7 +53,7 @@ def load_dataset():
                     img = img / 255.
                     list_of_images.append(img)
                     y_train.append(category)
-
+            category = category + 1
         X_train = np.concatenate(tuple(list_of_images), axis=3)
         X_train = np.transpose(X_train, (3, 2, 0, 1))
         y_train = np.array(y_train, dtype=np.int32)
@@ -72,10 +73,61 @@ def load_dataset():
     return X_train, y_train, X_val, y_val
 
 
+def load_fer_dataset():
+    file_path = '../data/fer2013/'
+    file_name = 'fer2013.csv'
+    data = pd.read_csv(file_path + file_name)
+    num_rows = 48
+    num_cols = 48
+    # TODO: this lambda function is slow
+    data['pixels'] = data['pixels'].apply(lambda x:
+                                          np.reshape(np.fromstring(x, sep=' '),
+                                                     (num_rows, num_cols)))
+
+    X_train = data[data['Usage'] == 'Training']['pixels'].values
+    X_train = [mtx[np.newaxis, np.newaxis, :, :] for mtx in X_train]
+    X_train = np.concatenate(tuple(X_train), axis=0)
+    X_train = X_train / 255.
+    y_train = np.array(data[data['Usage'] == 'Training']['emotion'].values,
+                       dtype=np.int32)
+
+    X_val = data[data['Usage'] == 'PrivateTest']['pixels']
+    X_val = [mtx[np.newaxis, np.newaxis, :, :] for mtx in X_val]
+    X_val = np.concatenate(tuple(X_val), axis=0)
+    X_val = X_val / 255.
+    y_val = np.array(data[data['Usage'] == 'PrivateTest']['emotion'].values,
+                     dtype=np.int32)
+    print(X_train.shape)
+    print(y_train.shape)
+    print(X_val.shape)
+    print(y_val.shape)
+
+    output = open(file_path + 'fpr_X_train.pkl', 'wb')
+    pickle.dump(X_train, output)
+    output.close()
+
+    output = open(file_path + 'fpr_y_train.pkl', 'wb')
+    pickle.dump(y_train, output)
+    output.close()
+
+    output = open(file_path + 'fpr_X_val.pkl', 'wb')
+    pickle.dump(X_val, output)
+    output.close()
+
+    output = open(file_path + 'fpr_y_val.pkl', 'wb')
+    pickle.dump(y_val, output)
+    output.close()
+
+    return X_train, y_train, X_val, y_val
+
 # ##################### Build the neural network model #######################
 # This script supports three types of models. For each one, we define a
 # function that takes a Theano variable representing the input and returns
 # the output layer of a neural network model built in Lasagne.
+
+
+my_shape = (None, 1, 48, 48)
+
 
 def build_mlp(input_var=None):
     # This creates an MLP of two hidden layers of 800 units each, followed by
@@ -85,7 +137,8 @@ def build_mlp(input_var=None):
     # Input layer, specifying the expected input shape of the network
     # (unspecified batchsize, 1 channel, 28 rows and 28 columns) and
     # linking it to the given Theano variable `input_var`, if any:
-    l_in = lasagne.layers.InputLayer(shape=(None, 3, 32, 32),
+
+    l_in = lasagne.layers.InputLayer(shape=my_shape,
                                      input_var=input_var)
 
     # Apply 20% dropout to the input data:
@@ -130,7 +183,7 @@ def build_custom_mlp(input_var=None, depth=2, width=800, drop_input=.2,
     # just used different names above for clarity.
 
     # Input layer and dropout (with shortcut `dropout` for `DropoutLayer`):
-    network = lasagne.layers.InputLayer(shape=(None, 3, 32, 32),
+    network = lasagne.layers.InputLayer(shape=my_shape,
                                         input_var=input_var)
     if drop_input:
         network = lasagne.layers.dropout(network, p=drop_input)
@@ -152,7 +205,7 @@ def build_cnn(input_var=None):
     # and a fully-connected hidden layer in front of the output layer.
 
     # Input layer, as usual:
-    network = lasagne.layers.InputLayer(shape=(None, 3, 32, 32),
+    network = lasagne.layers.InputLayer(shape=my_shape,
                                         input_var=input_var)
     # This time we do not apply input dropout, as it tends to work less well
     # for convolutional layers.
@@ -222,6 +275,7 @@ def main(model='mlp', num_epochs=500):
     # Load the dataset
     print("Loading data...")
     X_train, y_train, X_val, y_val = load_dataset()
+    X_train, y_train, X_val, y_val = load_fer_dataset()
 
     # Prepare Theano variables for inputs and targets
     input_var = T.tensor4('inputs')
