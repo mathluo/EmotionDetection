@@ -9,8 +9,12 @@ from __future__ import print_function
 import sys
 import os
 import time
-
+from scipy.misc import imresize
+import pandas as pd
+import pickle
 import numpy as np
+import matplotlib.image as mpimg
+from scipy.misc import imresize
 
 
 # ################## Download and prepare the MNIST dataset ##################
@@ -84,8 +88,8 @@ def load_mnist_dataset():
 
 def load_sfew_dataset():
     source = '../Data/SFEW_2/'  # I had to adjust this folder
-    emotions = ['Happy', 'Sad', 'Neutral',
-                'Disgust', 'Fear', 'Angry', 'Surprise']
+    emotions = ['Angry', 'Disgust', 'Fear',
+                'Happy', 'Sad', 'Surprise', 'Neutral']
 
     def load_face_images(folder_name):
         category = 0
@@ -127,49 +131,57 @@ def load_sfew_dataset():
 #########################################################
 
 def load_fer_dataset():
-    file_path = '../data/fer2013/'
-    file_name = 'fer2013.csv'
-    data = pd.read_csv(file_path + file_name)
-    num_rows = 48
-    num_cols = 48
-    # TODO: this lambda function is slow
-    data['pixels'] = data['pixels'].apply(lambda x:
-                                          np.reshape(np.fromstring(x, sep=' '),
-                                                     (num_rows, num_cols)))
 
-    X_train = data[data['Usage'] == 'Training']['pixels'].values
-    X_train = [mtx[np.newaxis, np.newaxis, :, :] for mtx in X_train]
-    X_train = np.concatenate(tuple(X_train), axis=0)
-    X_train = X_train / 255.
-    y_train = np.array(data[data['Usage'] == 'Training']['emotion'].values,
-                       dtype=np.int32)
+    file_path = '../Data/fer2013/'
+    if not (os.path.exists(file_path+'fpr_X_train.pkl') and os.path.exists(file_path+'fpr_y_train.pkl')\
+            and os.path.exists(file_path+'fpr_X_val.pkl') and os.path.exists(file_path+'fpr_y_val.pkl')):
+        file_name = 'fer2013.csv'
+        data = pd.read_csv(file_path + file_name)
+        num_rows = 48
+        num_cols = 48
+        # TODO: this lambda function is slow
+        data['pixels'] = data['pixels'].apply(lambda x:
+                                              np.reshape(np.fromstring(x, sep=' '),
+                                                         (num_rows, num_cols)))
 
-    X_val = data[data['Usage'] == 'PrivateTest']['pixels']
-    X_val = [mtx[np.newaxis, np.newaxis, :, :] for mtx in X_val]
-    X_val = np.concatenate(tuple(X_val), axis=0)
-    X_val = X_val / 255.
-    y_val = np.array(data[data['Usage'] == 'PrivateTest']['emotion'].values,
-                     dtype=np.int32)
-    print(X_train.shape)
-    print(y_train.shape)
-    print(X_val.shape)
-    print(y_val.shape)
+        X_train = data[data['Usage'] == 'Training']['pixels'].values
+        X_train = [mtx[np.newaxis, np.newaxis, :, :] for mtx in X_train]
+        X_train = np.concatenate(tuple(X_train), axis=0)
+        X_train = X_train / 255.
+        y_train = np.array(data[data['Usage'] == 'Training']['emotion'].values,
+                           dtype=np.int32)
 
-    output = open(file_path + 'fpr_X_train.pkl', 'wb')
-    pickle.dump(X_train, output)
-    output.close()
+        X_val = data[data['Usage'] == 'PrivateTest']['pixels']
+        X_val = [mtx[np.newaxis, np.newaxis, :, :] for mtx in X_val]
+        X_val = np.concatenate(tuple(X_val), axis=0)
+        X_val = X_val / 255.
+        y_val = np.array(data[data['Usage'] == 'PrivateTest']['emotion'].values,
+                         dtype=np.int32)
+        # print(X_train.shape)
+        # print(y_train.shape)
+        # print(X_val.shape)
+        # print(y_val.shape)
 
-    output = open(file_path + 'fpr_y_train.pkl', 'wb')
-    pickle.dump(y_train, output)
-    output.close()
+        output = open(file_path + 'fpr_X_train.pkl', 'wb')
+        pickle.dump(X_train, output)
+        output.close()
 
-    output = open(file_path + 'fpr_X_val.pkl', 'wb')
-    pickle.dump(X_val, output)
-    output.close()
+        output = open(file_path + 'fpr_y_train.pkl', 'wb')
+        pickle.dump(y_train, output)
+        output.close()
 
-    output = open(file_path + 'fpr_y_val.pkl', 'wb')
-    pickle.dump(y_val, output)
-    output.close()
+        output = open(file_path + 'fpr_X_val.pkl', 'wb')
+        pickle.dump(X_val, output)
+        output.close()
+
+        output = open(file_path + 'fpr_y_val.pkl', 'wb')
+        pickle.dump(y_val, output)
+        output.close()
+    else:
+        X_train = pickle.load( open( file_path + 'fpr_X_train.pkl', "rb" ) )
+        y_train = pickle.load( open( file_path + 'fpr_y_train.pkl', "rb" ) )
+        X_val = pickle.load( open( file_path + 'fpr_X_val.pkl', "rb" ) )
+        y_val = pickle.load( open( file_path + 'fpr_y_val.pkl', "rb" ) )
 
     return X_train, y_train, X_val, y_val
 

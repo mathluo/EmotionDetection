@@ -94,13 +94,23 @@ def build_cnn(input_var=None):
     # Input layer, as usual:
     network = lasagne.layers.InputLayer(shape=(None, 1, 28, 28),
                                         input_var=input_var)
-    # conv layer
+    # This time we do not apply input dropout, as it tends to work less well
+    # for convolutional layers.
+
+    # Convolutional layer with 32 kernels of size 5x5. Strided and padded
+    # convolutions are supported as well; see the docstring.
     network = lasagne.layers.Conv2DLayer(
             network, num_filters=32, filter_size=(5, 5),
             nonlinearity=lasagne.nonlinearities.rectify,
             W=lasagne.init.GlorotUniform())
+    # Expert note: Lasagne provides alternative convolutional layers that
+    # override Theano's choice of which implementation to use; for details
+    # please see http://lasagne.readthedocs.org/en/latest/user/tutorial.html.
 
-    # conv layer
+    # Max-pooling layer of factor 2 in both dimensions:
+    network = lasagne.layers.MaxPool2DLayer(network, pool_size=(2, 2))
+
+    # Another convolution with 32 5x5 kernels, and another 2x2 pooling:
     network = lasagne.layers.Conv2DLayer(
             network, num_filters=32, filter_size=(5, 5),
             nonlinearity=lasagne.nonlinearities.rectify)
@@ -119,6 +129,12 @@ def build_cnn(input_var=None):
             nonlinearity=lasagne.nonlinearities.softmax)
 
     return network
+
+
+
+def build_bengio_net(input_var = None): 
+    # implement structure by Bengio et al. 
+    
 
 
 
