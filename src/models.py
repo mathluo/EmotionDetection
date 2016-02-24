@@ -132,8 +132,47 @@ def build_cnn(input_var=None):
 
 
 
-def build_bengio_net(input_var = None): 
-    # implement structure by Bengio et al. 
+def build_bengio_net_1(input_var = None): 
+    # ConvNet1 implement structure by Bengio et al. 
+
+     # As a third model, we'll create a CNN of two convolution + pooling stages
+    # and a fully-connected hidden layer in front of the output layer.
+
+    # Stage 1:
+    network = lasagne.layers.InputLayer(shape=(None, 1, 40, 40),
+                                        input_var=input_var)
+    network = lasagne.layers.Conv2DLayer(
+            network, num_filters=64, filter_size=(5, 5),
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.GlorotUniform(),pad = 'same')
+    network = lasagne.layers.MaxPool2DLayer(network, pool_size=(2, 2))
+    network = lasagne.layers.LocalResponseNormalization2DLayer(network)
+
+    # Stage 2:
+    network = lasagne.layers.Conv2DLayer(
+            network, num_filters=64, filter_size=(5, 5),
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.GlorotUniform(),pad = 'same')
+    network = lasagne.layers.Pool2DLayer(network, pool_size=(2, 2),pad = 'same',mode = 'average_exc_pad')
+    network = lasagne.layers.LocalResponseNormalization2DLayer(network)
+
+    # Stage 3: 
+    network = lasagne.layers.Conv2DLayer(
+            network, num_filters=128, filter_size=(5, 5),
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.GlorotUniform(),pad = 'same')
+    network = lasagne.layers.Pool2DLayer(network, pool_size=(2, 2),pad = 'same',mode = 'average_exc_pad')
+    # Final layers: 
+    network = lasagne.layers.DenseLayer(
+            lasagne.layers.dropout(network, p=.5),
+            num_units=128,
+            nonlinearity=lasagne.nonlinearities.rectify)
+    network = lasagne.layers.DenseLayer(
+            lasagne.layers.dropout(network, p=.5),
+            num_units = 7,
+            nonlinearity=lasagne.nonlinearities.softmax)    
+
+    return network   
     
 
 
