@@ -3,3 +3,6 @@
 /Data/*/*/
 /Data/*/*/*/
 /Data/*/*/*/*/
+*.pyc
+*.ipynb
+*~
