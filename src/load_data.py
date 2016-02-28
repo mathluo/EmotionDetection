@@ -15,12 +15,39 @@ import pickle
 import numpy as np
 import matplotlib.image as mpimg
 from scipy.misc import imresize
+import gzip
 
 
 # ################## Download and prepare the MNIST dataset ##################
 # This is just some way of getting the MNIST dataset from an online location
 # and loading it into numpy arrays. It doesn't involve Lasagne at all.
 
+
+def load_mnist_test_data():
+    def load_mnist_images(foldername,filename):
+        # Read the inputs in Yann LeCun's binary format.
+        with gzip.open(foldername+filename, 'rb') as f:
+            data = np.frombuffer(f.read(), np.uint8, offset=16)
+        # The inputs are vectors now, we reshape them to monochrome 2D images,
+        # following the shape convention: (examples, channels, rows, columns)
+        data = data.reshape(-1, 1, 28, 28)
+        # The inputs come as bytes, we convert them to float32 in range [0,1].
+        # (Actually to range [0, 255/256], for compatibility to the version
+        # provided at http://deeplearning.net/data/mnist/mnist.pkl.gz.)
+        return data / np.float32(256)
+
+    def load_mnist_labels(foldername,filename):
+        # Read the labels in Yann LeCun's binary format.
+        with gzip.open(foldername+filename, 'rb') as f:
+            data = np.frombuffer(f.read(), np.uint8, offset=8)
+        # The labels are vectors of integers now, that's exactly what we want.
+        return data
+
+    # We can now download and read the training and test set images and labels.
+    foldername = '../Data/MNIST/'
+    X_test = load_mnist_images(foldername,'t10k-images-idx3-ubyte.gz')
+    y_test = load_mnist_labels(foldername,'t10k-labels-idx1-ubyte.gz')
+    return X_test, y_test #, X_test, y_test
 
 def load_mnist_dataset():
     """ Load or Download MNIST dataset
@@ -39,7 +66,6 @@ def load_mnist_dataset():
 
     # We then define functions for loading MNIST images and labels.
     # For convenience, they also download the requested files if needed.
-    import gzip
 
     def load_mnist_images(foldername,filename):
         if not os.path.exists(foldername+filename):
@@ -77,7 +103,7 @@ def load_mnist_dataset():
 
     # We just return all the arrays in order, as expected in main().
     # (It doesn't matter how we do this as long as we can read them again.)
-    return X_train, y_train, X_val, y_val, X_test, y_test
+    return X_train, y_train, X_val, y_val #, X_test, y_test
 
 
 
