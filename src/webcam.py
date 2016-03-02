@@ -25,9 +25,10 @@ status = np.zeros((video_rows, video_cols, 3))
 fig_path = '../figs/'
 emotions = ['Happy', 'Sad', 'Neutral',
             'Disgust', 'Fear', 'Angry', 'Surprise']
-emotion_dict = {0: 'Happy', 1: 'Sad', 2: 'Neutral',
-                3: 'Disgust', 4: 'Fear', 5: 'Angry', 6: 'Surprise'}
+emotion_dict = {0: 'Angry', 1: 'Disgust', 2: 'Fear',
+                3: 'Happy', 4: 'Sad', 5: 'Surprise', 6: 'Neutral'}
 
+# 0=Angry, 1=Disgust, 2=Fear, 3=Happy, 4=Sad, 5=Surprise, 6=Neutral
 img_shape = (230, 220, 3)
 
 
@@ -55,14 +56,16 @@ while True:
         cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
         # extract the face
-        my_face = frame[y:y+h, x:x+w, :]/255.
+
+        my_face = frame[y:y+h, x:x+w]
+        my_face = cv2.cvtColor(my_face, cv2.COLOR_BGR2GRAY)
+        my_face = my_face/255.
         # normalize and reshape my_face
-        input_face = sp.misc.imresize(my_face[:, :, 0], (48, 48))
+        input_face = sp.misc.imresize(my_face, (48, 48))
         input_face = input_face.reshape(1, 1, 48, 48)
 
         # classify the face to emotions
         y_pred = prediction_fn(input_face)
-        print y_pred[0]
         # get the emotion image
         # cv2.imshow('image', my_face)
         img = get_emotion_face(emotion_dict[y_pred[0]])
