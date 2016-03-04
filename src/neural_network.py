@@ -205,6 +205,11 @@ def get_output_number(y):
 # more functions to better separate the code, but it wouldn't make it any
 # easier to read.
 
+
+
+
+
+
 def train_model(input_data,model_name = 'cnn',name = 'train', batchsize = 100, num_epochs=100,**kwargs):
     # Set default options
     record_best_model = True
@@ -350,7 +355,6 @@ def train_model(input_data,model_name = 'cnn',name = 'train', batchsize = 100, n
     return returns
 
 
-
 def load_and_build_model(filename):
     # load the model from a .pkl file
     model_name, input_shape,output_number, model_params = load_params(filename)
@@ -360,7 +364,7 @@ def load_and_build_model(filename):
 
     #compile the final output function
     prediction = T.argmax(lasagne.layers.get_output(network, deterministic=True),axis = 1)
-    prediction_fn = theano.function( [input_var], prediction)
+    prediction_fn = theano.function( [input_var], prediction, allow_input_downcast = True)
     return prediction_fn
 
 
