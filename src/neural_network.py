@@ -167,6 +167,31 @@ def build_bengio_net_1(input_var = None,input_shape = None,output_number = None)
 ######################################## End of Model Building #####################################################3
 
 
+def aug_img(img):
+    start_idx = np.floor(0.1 * img.shape[0])
+    end_idx = np.floor(0.9 * img.shape[0])
+    
+    # mirror
+    mir_img = np.fliplr(img)
+
+    # rotate
+    rot_img_1 = sp.misc.imrotate(img, 15)
+    rot_img_1 = rot_img_1[start_idx:end_idx, start_idx:end_idx]
+    rot_img_1 = sp.misc.imresize(rot_img_1, (img.shape[0], img.shape[1]))
+    
+    rot_img_2 = sp.misc.imrotate(img, -15)
+    rot_img_2 = rot_img_2[start_idx:end_idx, start_idx:end_idx]
+    rot_img_2 = sp.misc.imresize(rot_img_2, (img.shape[0], img.shape[1]))
+    
+    res = np.zeros((4, 1, img.shape[0], img.shape[1]))
+    res[0, 0, :, :] = img
+    res[1, 0, :, :] = mir_img
+    res[2, 0, :, :] = rot_img_1
+    res[3, 0, :, :] = rot_img_2
+    return res
+
+
+
 def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
     assert len(inputs) == len(targets)
     if shuffle:
