@@ -21,4 +21,4 @@ input_data = load_fer_dataset()
 # choose the network
 model_name = 'cnn'
 #start training
-train_model(input_data,model_name,name = 'fer1', batchsize = 300, num_epochs=200)
+train_model(input_data,model_name,name = 'fer2', batchsize = 300, num_epochs=400)

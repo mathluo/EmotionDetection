@@ -6,6 +6,7 @@ import os
 import time
 
 import numpy as np
+import scipy as sp
 import theano
 import theano.tensor as T
 import pickle
@@ -75,6 +76,10 @@ def build_mlp(input_var=None,input_shape = None, output_number = None):
 
 
 
+
+    
+
+    
 def build_cnn(input_var=None, input_shape = None,output_number = None):
     # As a third model, we'll create a CNN of two convolution + pooling stages
     # and a fully-connected hidden layer in front of the output layer.
@@ -162,35 +167,102 @@ def build_bengio_net_1(input_var = None,input_shape = None,output_number = None)
 
     return network   
 
+    
+def build_cnn2(input_var=None, input_shape = None,output_number = None):
+    # As a third model, we'll create a CNN of two convolution + pooling stages
+    # and a fully-connected hidden layer in front of the output layer.
 
+    # Input layer, as usual:
+    network = lasagne.layers.InputLayer(shape=input_shape,
+                                        input_var=input_var)
+    # This time we do not apply input dropout, as it tends to work less well
+    # for convolutional layers.
+
+    # Convolutional layer with 32 kernels of size 5x5. Strided and padded
+    # convolutions are supported as well; see the docstring.
+    network = lasagne.layers.Conv2DLayer(
+            network, num_filters=32, filter_size=(5, 5),
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.GlorotUniform())
+    # Expert note: Lasagne provides alternative convolutional layers that
+    # override Theano's choice of which implementation to use; for details
+    # please see http://lasagne.readthedocs.org/en/latest/user/tutorial.html.
+
+    # Max-pooling layer of factor 2 in both dimensions:
+    network = lasagne.layers.MaxPool2DLayer(network, pool_size=(2, 2))
+
+    # Another convolution with 32 5x5 kernels, and another 2x2 pooling:
+    network = lasagne.layers.Conv2DLayer(
+            network, num_filters=32, filter_size=(5, 5),
+            nonlinearity=lasagne.nonlinearities.rectify)
+    network = lasagne.layers.MaxPool2DLayer(network, pool_size=(2, 2))
+    network = lasagne.layers.Conv2DLayer(
+            network, num_filters=64, filter_size=(5, 5),
+            nonlinearity=lasagne.nonlinearities.rectify)    
+
+    # A fully-connected layer of 256 units with 50% dropout on its inputs:
+    network = lasagne.layers.DenseLayer(
+            lasagne.layers.dropout(network, p=.5),
+            num_units=700,
+            nonlinearity=lasagne.nonlinearities.rectify)
+
+    # And, finally, the 10-unit output layer with 50% dropout on its inputs:
+    network = lasagne.layers.DenseLayer(
+            lasagne.layers.dropout(network, p=.5),
+            num_units=output_number,
+            nonlinearity=lasagne.nonlinearities.softmax)
+
+    return network
 
 ######################################## End of Model Building #####################################################3
 
 
-def aug_img(img):
-    start_idx = np.floor(0.1 * img.shape[0])
-    end_idx = np.floor(0.9 * img.shape[0])
+# def aug_single_img_1(img):
     
-    # mirror
-    mir_img = np.fliplr(img)
-
-    # rotate
-    rot_img_1 = sp.misc.imrotate(img, 15)
-    rot_img_1 = rot_img_1[start_idx:end_idx, start_idx:end_idx]
-    rot_img_1 = sp.misc.imresize(rot_img_1, (img.shape[0], img.shape[1]))
+#     start_idx = np.floor(0.1 * img.shape[0])
+#     end_idx = np.floor(0.9 * img.shape[0])
     
-    rot_img_2 = sp.misc.imrotate(img, -15)
-    rot_img_2 = rot_img_2[start_idx:end_idx, start_idx:end_idx]
-    rot_img_2 = sp.misc.imresize(rot_img_2, (img.shape[0], img.shape[1]))
+#     # mirror
+#     mir_img = np.fliplr(img)
+
+#     # rotate
+#     degree = 15
+#     rot_img_1 = sp.misc.imrotate(img, degree)
+#     rot_img_1 = rot_img_1[start_idx:end_idx, start_idx:end_idx]
+#     rot_img_1 = sp.misc.imresize(rot_img_1, (img.shape[0], img.shape[1]))
+#     rot_img_1 = rot_img_1.astype(float)/255
+
     
-    res = np.zeros((4, 1, img.shape[0], img.shape[1]))
-    res[0, 0, :, :] = img
-    res[1, 0, :, :] = mir_img
-    res[2, 0, :, :] = rot_img_1
-    res[3, 0, :, :] = rot_img_2
-    return res
+#     rot_img_2 = sp.misc.imrotate(img, -degree)
+#     rot_img_2 = rot_img_2[start_idx:end_idx, start_idx:end_idx]
+#     rot_img_2 = sp.misc.imresize(rot_img_2, (img.shape[0], img.shape[1]))
+#     rot_img_2 = rot_img_2.astype(float)/255
+    
+#     res = np.zeros((4, 1, img.shape[0], img.shape[1]))
+#     res[0, 0, :, :] = img
+#     res[1, 0, :, :] = mir_img
+#     res[2, 0, :, :] = rot_img_1
+#     res[3, 0, :, :] = rot_img_2
+#     return res
 
-
+# def aug_batch_img(batch_x, batch_y,shuffle = True):
+    
+#     num_copy = 4 # hard coded for right now.
+#     res_1= np.zeros((batch_x.shape[0]*num_copy,batch_x.shape[1], batch_x.shape[2], batch_x.shape[3]))
+#     res_2 = np.zeros(batch_y.shape[0]*num_copy).astype(int)
+#     for i in range(batch_x.shape[0]):
+#         res_1[i*num_copy:(i+1)*num_copy, :, :, :] = aug_single_img_1(batch_x[i,0,:, :])
+#         res_2[i*num_copy:(i+1)*num_copy]  = np.ones(num_copy).astype(int)*batch_y[i]
+#     if shuffle:
+#         indices = range(batch_x.shape[0]*num_copy)
+#         np.random.shuffle(indices)
+#         res_1 = res_1[indices,:,:,:]
+#         res_2 = res_2[indices]
+#     #print (res_1.shape)
+#     #print (res_2.shape)
+#     return res_1 ,res_2
+        
+    
 
 def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
     assert len(inputs) == len(targets)
@@ -210,6 +282,8 @@ def choose_network(model_name,input_var,input_shape,output_number):
         network = build_mlp(input_var, input_shape = input_shape, output_number = output_number)
     elif model_name == 'cnn':
         network = build_cnn(input_var, input_shape = input_shape, output_number = output_number)
+    elif model_name == 'cnn2':
+        network = build_cnn2(input_var, input_shape = input_shape, output_number = output_number)
     else:
         print("Unrecognized model type %r." % model)
         return
@@ -225,6 +299,16 @@ def get_output_number(y):
     return results
 
 
+
+def agg_prediction(y_pred, num_aug):
+    res = np.zeros((int(y_pred.shape[0]/num_aug), y_pred.shape[1]))
+    for i in range(num_aug):
+        res += y_pred[i::num_aug, :]
+    res = res/num_aug
+    return res
+
+
+
 # ############################## Main program ################################
 # Everything else will be handled in our main program now. We could pull out
 # more functions to better separate the code, but it wouldn't make it any
@@ -235,7 +319,7 @@ def get_output_number(y):
 
 
 
-def train_model(input_data,model_name = 'cnn',name = 'train', batchsize = 100, num_epochs=100,**kwargs):
+def train_model(input_data,foldername = '../',model_name = 'cnn',name = 'train', batchsize = 100, num_epochs=100,num_aug = None, **kwargs):
     # Set default options
     record_best_model = True
     if 'record_best_model' in kwargs:
@@ -298,6 +382,15 @@ def train_model(input_data,model_name = 'cnn',name = 'train', batchsize = 100, n
     # Compile a second function computing the validation loss and accuracy:
     val_fn = theano.function([input_var, target_var], [test_loss, test_acc],allow_input_downcast=True)
 
+    # This is really inefficient in computing the aggregate validation err. 
+    if not(num_aug is None):
+        pred_fn = theano.function([input_var], test_prediction, allow_input_downcast=True)
+        test_pred = T.matrix('outputs')
+        test_acc = T.mean(T.eq(T.argmax(test_pred, axis=1), target_var),
+                      dtype=theano.config.floatX)
+        err_fn = theano.function([test_pred,target_var],test_acc, allow_input_downcast=True)
+
+
     # Finally, launch the training loop.
     print("Starting training...")
     # We iterate over epochs:
@@ -307,6 +400,8 @@ def train_model(input_data,model_name = 'cnn',name = 'train', batchsize = 100, n
         training_loss_record = np.zeros(num_epochs)
         validation_loss_record = np.zeros(num_epochs)
         validation_accuracy_record = np.zeros(num_epochs)
+        if not(num_aug is None):
+            validation_agg_accuracy_record = np.zeros(num_epochs)
 
     min_val_err = np.inf
     min_val_accuracy = np.inf
@@ -322,12 +417,17 @@ def train_model(input_data,model_name = 'cnn',name = 'train', batchsize = 100, n
             train_batches += 1
 
         # And a full pass over the validation data:
+        if not(num_aug is None):
+            val_acc_agg = 0
         val_err = 0
         val_acc = 0
         val_batches = 0
         for batch in iterate_minibatches(X_val, y_val, batchsize, shuffle=False):
             inputs, targets = batch
             err, acc = val_fn(inputs, targets)
+            if not(num_aug is None):
+                pred = pred_fn(inputs)
+                val_acc_agg += err_fn(agg_prediction(pred,num_aug),targets[0::num_aug])
             val_err += err
             val_acc += acc
             val_batches += 1
@@ -336,14 +436,20 @@ def train_model(input_data,model_name = 'cnn',name = 'train', batchsize = 100, n
         train_err = train_err/train_batches
         val_err = val_err/val_batches
         val_acc = val_acc / val_batches 
+        if not(num_aug is None):
+            val_acc_agg = val_acc_agg/val_batches
         if record_training_err:
             training_loss_record[epoch] = train_err
             validation_loss_record[epoch] = val_err
             validation_accuracy_record[epoch] =  val_acc
+            if not(num_aug is None):
+                validation_agg_accuracy_record[epoch] =  val_acc_agg
         if val_err < min_val_err:
             min_val_err = val_err
             min_val_err_epoch = epoch
             min_val_accuracy = val_acc
+            if not(num_aug is None):
+                min_val_agg_accuracy = val_acc_agg
             if record_best_model:
                 best_model_params = lasagne.layers.get_all_param_values(network)
 
@@ -353,13 +459,21 @@ def train_model(input_data,model_name = 'cnn',name = 'train', batchsize = 100, n
         print("  training loss:\t\t{:.6f}".format(train_err ))
         print("  validation loss:\t\t{:.6f}".format(val_err ))
         print("  validation accuracy:\t\t{:.2f} %".format(val_acc * 100))
+        if not(num_aug is None):
+            print("  validation agglomorate accuracy:\t\t{:.2f} %".format(val_acc_agg * 100))    
 
     print("  Best validation loss on iteration:\t\t{}".format(min_val_err_epoch))
     print("  Validation loss:\t\t{:.6f}".format(min_val_err))
     print("  Valication accuracy:\t\t{:.2f} %".format(min_val_accuracy*100))
+    if not(num_aug is None):
+        print("  validation agglomorate accuracy:\t\t{:.2f} %".format(min_val_agg_accuracy * 100))
     # After training, decide what to save and what to return 
-    foldername = '../TrainedModels/'
-    returns = (min_val_err,min_val_accuracy)
+    returns = {}
+    returns['best_val_accuracy'] = min_val_accuracy
+    returns['best_val_loss'] = min_val_err
+    returns['best_val_epoch'] = min_val_err_epoch
+    if not(num_aug is None):
+        returns['best_agg_val_accuracy'] = min_val_agg_accuracy
     if save_model:
         meta_data = {}
         meta_data['experiment_name'] = name
@@ -369,14 +483,17 @@ def train_model(input_data,model_name = 'cnn',name = 'train', batchsize = 100, n
         meta_data['learning_rate'] = learning_rate
         meta_data['momentum'] = momentum
         save_params(foldername+name + '_experiment_metadata',meta_data)
-        returns = returns+(min_val_err_epoch, )
         if record_training_err:
-            returns = returns + (training_loss_record,validation_loss_record,validation_accuracy_record)
+            returns['training_loss_record'] = training_loss_record
+            returns['validation_loss_record'] = validation_loss_record
+            returns['validation_accuracy_record'] = validation_accuracy_record
+            if not(num_aug is None):
+                returns['validation_agg_accuracy_record'] = validation_agg_accuracy_record
         save_params(foldername+name + '_loss_record',returns)
         if record_best_model:
             best_model_params = (model_name, input_shape, output_number, best_model_params)
             save_params(foldername+name + '_best_model', best_model_params)
-            returns = returns+(best_model_params,)
+            returns['best_model_params'] = best_model_params
     return returns
 
 
