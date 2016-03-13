@@ -204,16 +204,54 @@ def load_fer_dataset():
         pickle.dump(y_val, output)
         output.close()
     else:
-        X_train = pickle.load( open( file_path + 'fpr_X_train.pkl', "rb" ) )
-        y_train = pickle.load( open( file_path + 'fpr_y_train.pkl', "rb" ) )
-        X_val = pickle.load( open( file_path + 'fpr_X_val.pkl', "rb" ) )
-        y_val = pickle.load( open( file_path + 'fpr_y_val.pkl', "rb" ) )
+        X_train = pickle.load(open(file_path + 'fpr_X_train.pkl', "rb"))
+        y_train = pickle.load(open(file_path + 'fpr_y_train.pkl', "rb"))
+        X_val = pickle.load(open(file_path + 'fpr_X_val.pkl', "rb"))
+        y_val = pickle.load(open(file_path + 'fpr_y_val.pkl', "rb"))
 
     return X_train, y_train, X_val, y_val
 
 
 
+def drop_two_fer_classes():
+    # drop the two classes: disgust and fear
+    file_path = '../Data/fer2013/'
+    X_train, y_train, X_val, y_val = load_fer_dataset()
+    disgust_idx = np.where(y_train == 1)[0]
+    fear_idx = np.where(y_train == 2)[0]
+    rm_index = np.concatenate((disgust_idx, fear_idx))
+    y_train_new = np.delete(y_train, rm_index, 0)
+    X_train_new = np.delete(X_train, rm_index, 0)
+
+    disgust_idx = np.where(y_val == 1)[0]
+    fear_idx = np.where(y_val == 2)[0]
+    rm_index = np.concatenate((disgust_idx, fear_idx))
+    y_val_new = np.delete(y_val, rm_index, 0)
+    X_val_new = np.delete(X_val, rm_index, 0)
+    output = open(file_path + 'drop_2_fpr_X_train.pkl', 'wb')
+    pickle.dump(X_train_new, output)
+    output.close()
+
+    output = open(file_path + 'drop_2_fpr_y_train.pkl', 'wb')
+    pickle.dump(y_train_new, output)
+    output.close()
+
+    output = open(file_path + 'drop_2_fpr_X_val.pkl', 'wb')
+    pickle.dump(X_val_new, output)
+    output.close()
+
+    output = open(file_path + 'drop_2_fpr_y_val.pkl', 'wb')
+    pickle.dump(y_val_new, output)
+    output.close()
 
 
+def load_drop_2_class_dataset():
+    file_path = '../Data/fer2013/'
+    X_train = pickle.load(open(file_path + 'drop_2_fpr_X_train.pkl', "rb"))
+    y_train = pickle.load(open(file_path + 'drop_2_fpr_y_train.pkl', "rb"))
+    X_val = pickle.load(open(file_path + 'drop_2_fpr_X_val.pkl', "rb"))
+    y_val = pickle.load(open(file_path + 'drop_2_fpr_y_val.pkl', "rb"))
+    return X_train, y_train, X_val, y_val
 
-
+if __name__ == "__main__":
+    drop_two_fer_classes()
