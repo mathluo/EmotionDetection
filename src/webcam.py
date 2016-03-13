@@ -5,7 +5,7 @@ import scipy as sp
 from neural_network import *
 from data_preprocess import random_crop
 
-foldername = '../TrainedModelsBatch2/'
+foldername = '../TrainedModels/'
 filename = 'fer1_best_model'
 prediction_fn = load_and_build_model(foldername+filename)
 
