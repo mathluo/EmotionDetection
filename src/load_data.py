@@ -246,11 +246,17 @@ def drop_two_fer_classes():
 
 
 def load_drop_2_class_dataset():
+    temp_dict = np.array([0,0,0,1,2,3,4]).astype(int)
     file_path = '../Data/fer2013/'
     X_train = pickle.load(open(file_path + 'drop_2_fpr_X_train.pkl', "rb"))
     y_train = pickle.load(open(file_path + 'drop_2_fpr_y_train.pkl', "rb"))
+    for i in range(y_train.shape[0]):
+        y_train[i] = temp_dict[y_train[i]]   
     X_val = pickle.load(open(file_path + 'drop_2_fpr_X_val.pkl', "rb"))
     y_val = pickle.load(open(file_path + 'drop_2_fpr_y_val.pkl', "rb"))
+    for i in range(y_val.shape[0]):
+        y_val[i] = temp_dict[y_val[i]]
+
     return X_train, y_train, X_val, y_val
 
 if __name__ == "__main__":

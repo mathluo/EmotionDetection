@@ -14,6 +14,20 @@ from scipy.misc import imresize
 import gzip
 
 
+def normalize_batch(img_batch):
+# assume input is a [n,1,48,48] tensor
+    img_batch = img_batch.astype(float)
+    results = img_batch - np.mean(img_batch,axis = (2,3)).reshape(img_batch.shape[0],1,1,1) 
+    results = results /  np.std(results,axis = (2,3)).reshape(img_batch.shape[0],1,1,1) 
+    return results
+
+def normalize_single_image(img):
+    img = img.astype(float)
+    results = img - np.mean(img)
+    results = results / np.std(results)
+    return results
+
+
 def random_crop(img,crop_sz,left_shift, right_shift):
     default_shift = int((img.shape[0] - crop_sz)/2)
     left_shift = left_shift + default_shift
