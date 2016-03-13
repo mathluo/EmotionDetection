@@ -89,7 +89,7 @@ while True:
         # cv2.imshow('image', my_face)
         img = get_emotion_face(emotion_dict[y_pred])
         # set the emotion image to the frame
-        frame[y:y+img.shape[0], x:x+img.shape[1], :] = img
+        frame[y:min(y+img.shape[0], frame.shape[0]), x:min(x+img.shape[1], frame.shape[1]), :] = img[0:min(img.shape[0], frame.shape[0] - y), 0:min(img.shape[1], frame.shape[1] - x)]
 
     # frame = np.hstack((frame, status))
     cv2.imshow('image', frame)
