@@ -3,14 +3,21 @@ import sys
 import numpy as np
 import scipy as sp
 from neural_network import *
+from data_preprocess import random_crop
 
-foldername = '../TrainedModels/'
+foldername = '../TrainedModelsBatch2/'
 filename = 'fer1_best_model'
-
 prediction_fn = load_and_build_model(foldername+filename)
 
 
-cascPath = sys.argv[1]
+# adding random cropping into the prediction. 
+foldername1 = '../TrainedModelsBatch1/'
+filename1= 'fer2_aug_cf_best_model'
+prediction_fn_crop = load_and_build_model(foldername1+filename1, mode = 'probability')
+
+
+#cascPath = sys.argv[1]
+cascPath = './haarcascade_frontalface_default.xml'
 faceCascade = cv2.CascadeClassifier(cascPath)
 
 video_capture = cv2.VideoCapture(0)
@@ -37,6 +44,10 @@ def get_emotion_face(emotion):
     img = cv2.resize(img, (50, 50))
     return img
 
+np.random.seed()
+
+iscrop = False
+
 while True:
     # Capture frame-by-frame
     ret, frame = video_capture.read()
@@ -56,19 +67,27 @@ while True:
         cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
         # extract the face
-
         my_face = frame[y:y+h, x:x+w]
         my_face = cv2.cvtColor(my_face, cv2.COLOR_BGR2GRAY)
-        my_face = my_face/255.
+        #my_face = my_face/255. #this is not normalize with respect to lighting
+        my_face = my_face.astype(float)/255.
         # normalize and reshape my_face
         input_face = sp.misc.imresize(my_face, (48, 48))
-        input_face = input_face.reshape(1, 1, 48, 48)
 
-        # classify the face to emotions
-        y_pred = prediction_fn(input_face)
+        if iscrop:
+            left_shift = np.random.randint(low = -3, high = 4, size = 3)
+            right_shift = np.random.randint(low = -3, high = 4, size = 3)
+            input_crop = np.zeros((3,1,42,42))
+            for i in range(3):
+                input_crop[i,0,:,:] = random_crop(img = input_face, crop_sz = 42, left_shift = left_shift[i], right_shift = right_shift[i])
+            y_pred = np.argmax(np.mean(prediction_fn_crop(input_crop),axis = 0))
+        else:
+            input_face = input_face.reshape(1, 1, 48, 48)
+            y_pred = prediction_fn(input_face)
+            y_pred = y_pred[0]
         # get the emotion image
         # cv2.imshow('image', my_face)
-        img = get_emotion_face(emotion_dict[y_pred[0]])
+        img = get_emotion_face(emotion_dict[y_pred])
         # set the emotion image to the frame
         frame[y:y+img.shape[0], x:x+img.shape[1], :] = img
 

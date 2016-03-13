@@ -497,7 +497,7 @@ def train_model(input_data,foldername = '../',model_name = 'cnn',name = 'train',
     return returns
 
 
-def load_and_build_model(filename):
+def load_and_build_model(filename, mode = 'labels'):
     # load the model from a .pkl file
     model_name, input_shape,output_number, model_params = load_params(filename)
     input_var = T.tensor4('inputs')
@@ -505,8 +505,12 @@ def load_and_build_model(filename):
     lasagne.layers.set_all_param_values(network,model_params)
 
     #compile the final output function
-    prediction = T.argmax(lasagne.layers.get_output(network, deterministic=True),axis = 1)
-    prediction_fn = theano.function( [input_var], prediction, allow_input_downcast = True)
+    if mode == 'labels':
+        prediction = T.argmax(lasagne.layers.get_output(network, deterministic=True),axis = 1)
+        prediction_fn = theano.function( [input_var], prediction, allow_input_downcast = True)
+    else:
+        prediction = lasagne.layers.get_output(network, deterministic=True)
+        prediction_fn = theano.function( [input_var], prediction, allow_input_downcast = True)
     return prediction_fn
 
 

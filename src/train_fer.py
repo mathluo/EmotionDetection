@@ -16,9 +16,13 @@ from load_data import *
 from neural_network import *
 
 
-# load the data
+batchsize = 300
+num_epochs = 200
+num_aug_dict = {'crop_flip':6, 'crop_rot_flip':12, 'rot_flip':4}
+foldername = '../TrainedModelsBatch2/'
+
+# Experiment 1
 input_data = load_fer_dataset()
-# choose the network
 model_name = 'cnn'
-#start training
-train_model(input_data,model_name,name = 'fer2', batchsize = 300, num_epochs=400)
+train_model(input_data,model_name = model_name,foldername = foldername, name = 'fer1', batchsize = batchsize, 
+	num_epochs=num_epochs, num_aug = None)
