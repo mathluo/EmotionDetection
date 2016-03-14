@@ -12,6 +12,9 @@ import numpy as np
 import matplotlib.image as mpimg
 from scipy.misc import imresize
 import gzip
+import load_data
+reload(load_data)
+from load_data import *
 
 
 def normalize_batch(img_batch):
@@ -157,13 +160,17 @@ def aug_batch_img(batch_x, batch_y,shuffle = True, mode = 'rot_flip'):
 
 
 
-def load_augment_data(mode = 'crop_rot_flip'):
+
+def load_augment_data(mode = 'crop_rot_flip',drop_std_flag = False):
     file_path = '../Data/fer2013/'
     X_train = pickle.load( open( file_path + 'fpr_X_train.pkl', "rb" ) )
     y_train = pickle.load( open( file_path + 'fpr_y_train.pkl', "rb" ) )
     X_val = pickle.load( open( file_path + 'fpr_X_val.pkl', "rb" ) )
     y_val = pickle.load( open( file_path + 'fpr_y_val.pkl', "rb" ) )
 
+    if drop_std_flag:
+        X_train, y_train = drop_std(X_train,y_train,up = 300, low = 300)
+        X_val, y_val = drop_std(X_val,y_val,up = 10, low = 10)
     print('loading original complete')
     X_train_aug, y_train_aug = aug_batch_img(X_train, y_train, mode = mode)
     print('augmented training data')
@@ -173,6 +180,10 @@ def load_augment_data(mode = 'crop_rot_flip'):
         X_val_aug = X_val
         y_val_aug = y_val
     print('augmented validation data')
+    if drop_std_flag:
+        X_train_aug = normalize_batch(X_train_aug)
+        X_val_aug = normalize_batch(X_train_aug)
+
     return X_train_aug, y_train_aug, X_val_aug, y_val_aug
 
 # print ('saving data ......')

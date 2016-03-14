@@ -16,6 +16,16 @@ import numpy as np
 import matplotlib.image as mpimg
 from scipy.misc import imresize
 import gzip
+from data_preprocess import *
+
+
+def drop_std(X_train, y_train, up = 300, low = 300):
+    ind_sort = np.argsort(np.std(X_train,axis = (2,3)).flatten())
+    ind_sort = ind_sort[low:-up] #just drop those with too high a variance. 
+    X_train = X_train[ind_sort,:,:,:]
+    y_train = y_train[ind_sort]
+    X_train = normalize_batch(X_train)
+    return X_train,y_train
 
 
 # ################## Download and prepare the MNIST dataset ##################
@@ -156,7 +166,7 @@ def load_sfew_dataset():
 # Function for loading the SFEW dataset
 #########################################################
 
-def load_fer_dataset():
+def load_fer_dataset(drop_std_flag = False):
 
     file_path = '../Data/fer2013/'
     if not (os.path.exists(file_path+'fpr_X_train.pkl') and os.path.exists(file_path+'fpr_y_train.pkl')\
@@ -208,6 +218,9 @@ def load_fer_dataset():
         y_train = pickle.load(open(file_path + 'fpr_y_train.pkl', "rb"))
         X_val = pickle.load(open(file_path + 'fpr_X_val.pkl', "rb"))
         y_val = pickle.load(open(file_path + 'fpr_y_val.pkl', "rb"))
+    if drop_std_flag:
+        X_train, y_train = drop_std(X_train,y_train,up = 300, low = 300)
+        X_val, y_val = drop_std(X_val,y_val,up = 10, low = 10)
 
     return X_train, y_train, X_val, y_val
 
@@ -243,6 +256,22 @@ def drop_two_fer_classes():
     output = open(file_path + 'drop_2_fpr_y_val.pkl', 'wb')
     pickle.dump(y_val_new, output)
     output.close()
+
+def five_class_drop_300():
+    temp_dict = np.array([0,0,0,1,2,3,4]).astype(int)
+    file_path = '../Data/fer2013/'
+    X_train = pickle.load(open(file_path + 'drop_2_fpr_X_train.pkl', "rb"))
+    y_train = pickle.load(open(file_path + 'drop_2_fpr_y_train.pkl', "rb"))
+    for i in range(y_train.shape[0]):
+        y_train[i] = temp_dict[y_train[i]]   
+    X_val = pickle.load(open(file_path + 'drop_2_fpr_X_val.pkl', "rb"))
+    y_val = pickle.load(open(file_path + 'drop_2_fpr_y_val.pkl', "rb"))
+    for i in range(y_val.shape[0]):
+        y_val[i] = temp_dict[y_val[i]]
+    X_train, y_train = drop_std(X_train,y_train,up = 300, low = 300)
+    X_val, y_val = drop_std(X_val,y_val,up = 10, low = 10)
+    return X_train, y_train, X_val, y_val
+
 
 
 def load_drop_2_class_dataset():

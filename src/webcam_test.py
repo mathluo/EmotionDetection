@@ -50,7 +50,7 @@ def get_emotion_face(emotion):
 np.random.seed()
 
 iscrop = False
-
+isnormalize = True
 while True:
     # Capture frame-by-frame
     ret, frame = video_capture.read()
@@ -76,6 +76,9 @@ while True:
         my_face = my_face.astype(float)/255.
         # normalize and reshape my_face
         input_face = sp.misc.imresize(my_face, (48, 48))
+
+        if isnormalize:
+            input_face = normalize_single_image(input_face)
 
         if iscrop:
             left_shift = np.random.randint(low = -3, high = 4, size = 3)

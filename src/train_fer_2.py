@@ -19,9 +19,9 @@ from data_preprocess import *
 
 
 batchsize = 300
-num_epochs = 300
+num_epochs = 140
 num_aug_dict = {'crop_flip':6, 'crop_rot_flip':12, 'rot_flip':4}
-foldername = '../TrainedModelsBatch1/'
+foldername = '../TrainedModelsBatch4/'
 
 # Experiment 1
 input_data = load_fer_dataset()
