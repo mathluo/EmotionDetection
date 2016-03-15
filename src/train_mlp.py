@@ -24,10 +24,10 @@ num_aug_dict = {'crop_flip':6, 'crop_rot_flip':12, 'rot_flip':4}
 foldername = '../TrainedModelsBatch3/'
 
 # Experiment 1
-X_train,y_train,X_val,y_val = load_drop_2_class_dataset()
+X_train,y_train,X_val,y_val = load_mnist_dataset()
 #X_train = normalize_batch(X_train)
 #X_val = normalize_batch(X_val)
 input_data = (X_train,y_train,X_val,y_val)
 model_name = 'mlp'
-train_model(input_data,model_name = model_name,foldername = foldername, name = 'fer1_mlp', batchsize = batchsize, 
+train_model(input_data,model_name = model_name,foldername = foldername, name = 'mnist1_mlp', batchsize = batchsize, 
 	num_epochs=num_epochs, num_aug = None)#num_aug = num_aug_dict['crop_flip'])

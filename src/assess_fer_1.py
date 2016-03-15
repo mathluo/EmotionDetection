@@ -10,7 +10,7 @@ from model_assess import *
 
 # load the model from a .pkl file
 foldername = '../TrainedModelsBatch3/'
-filename = 'fer1_normalize_best_model'
+filename = 'fer2_aug_rf_normalize_best_model'
 prediction_fn = load_and_build_model(foldername+filename)
 
 
